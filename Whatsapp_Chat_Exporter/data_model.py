@@ -15,9 +15,11 @@ class TimeZone(tzinfo):
 
 
 class ChatStore():
-    def __init__(self, type, name=None, media=None):
+    def __init__(self, type, name=None, media=None, jid=None):
         if name is not None and not isinstance(name, str):
             raise TypeError("Name must be a string or None")
+        if jid is not None:
+            self.jid = jid
         self.name = name
         self.messages = {}
         self.type = type
@@ -79,6 +81,7 @@ class Message():
         self.meta = False
         self.data = None
         self.sender = None
+        self.sender_jid = None
         self.safe = False
         self.mime = None
         # Extra
@@ -98,6 +101,7 @@ class Message():
             'meta'        : self.meta,
             'data'        : self.data,
             'sender'      : self.sender,
+            'sender_jid'  : self.sender_jid,
             'safe'        : self.safe,
             'mime'        : self.mime,
             'reply'       : self.reply,

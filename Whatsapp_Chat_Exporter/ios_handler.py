@@ -21,7 +21,7 @@ def contacts(db, data):
     while content is not None:
         if not content["ZWHATSAPPID"].endswith("@s.whatsapp.net"):
             ZWHATSAPPID = content["ZWHATSAPPID"] + "@s.whatsapp.net"
-        data[ZWHATSAPPID] = ChatStore(Device.IOS)
+        data[ZWHATSAPPID] = ChatStore(Device.IOS, jid=ZWHATSAPPID)
         data[ZWHATSAPPID].status = content["ZABOUTTEXT"]
         content = c.fetchone()
 
@@ -98,7 +98,7 @@ def messages(db, data, media_folder, timezone_offset, filter_date, filter_chat):
                         LEFT JOIN ZWAGROUPMEMBER
                             ON ZWAMESSAGE.ZGROUPMEMBER = ZWAGROUPMEMBER.Z_PK
                   WHERE 1=1
-                    {f'AND ZMESSAGEDATE {filter_date}' if filter_date is not None else ''}
+                    {f"AND ZMESSAGEDATE {filter_date}" if filter_date is not None else ""}
                     {get_chat_condition(filter_chat[0], True, ["ZWACHATSESSION.ZCONTACTJID", "ZMEMBERJID"], "ZGROUPINFO", "ios")}
                     {get_chat_condition(filter_chat[1], False, ["ZWACHATSESSION.ZCONTACTJID", "ZMEMBERJID"], "ZGROUPINFO", "ios")}""")
     total_row_number = c.fetchone()[0]
@@ -121,7 +121,7 @@ def messages(db, data, media_folder, timezone_offset, filter_date, filter_chat):
                     INNER JOIN ZWACHATSESSION
                         ON ZWAMESSAGE.ZCHATSESSION = ZWACHATSESSION.Z_PK
                  WHERE 1=1   
-                    {f'AND ZMESSAGEDATE {filter_date}' if filter_date is not None else ''}
+                    {f"AND ZMESSAGEDATE {filter_date}" if filter_date is not None else ""}
                     {get_chat_condition(filter_chat[0], True, ["ZCONTACTJID", "ZMEMBERJID"], "ZGROUPINFO", "ios")}
                     {get_chat_condition(filter_chat[1], False, ["ZCONTACTJID", "ZMEMBERJID"], "ZGROUPINFO", "ios")}
                  ORDER BY ZMESSAGEDATE ASC;""")
@@ -133,7 +133,7 @@ def messages(db, data, media_folder, timezone_offset, filter_date, filter_chat):
         is_group_message = content["ZGROUPINFO"] is not None
         if ZCONTACTJID not in data:
             data[ZCONTACTJID] = ChatStore(Device.IOS)
-            path = f'{media_folder}/Media/Profile/{ZCONTACTJID.split("@")[0]}'
+            path = f"{media_folder}/Media/Profile/{ZCONTACTJID.split('@')[0]}"
             avatars = glob(f"{path}*")
             if 0 < len(avatars) <= 1:
                 data[ZCONTACTJID].their_avatar = avatars[0]
@@ -147,24 +147,27 @@ def messages(db, data, media_folder, timezone_offset, filter_date, filter_chat):
         message = Message(
             from_me=content["ZISFROMME"],
             timestamp=ts,
-            time=ts, # TODO: Could be bug
+            time=ts,  # TODO: Could be bug
             key_id=content["ZSTANZAID"][:17],
-            timezone_offset=timezone_offset
+            timezone_offset=timezone_offset,
         )
         invalid = False
         if is_group_message and content["ZISFROMME"] == 0:
             name = None
+            jid = None
             if content["ZMEMBERJID"] is not None:
                 if content["ZMEMBERJID"] in data:
                     name = data[content["ZMEMBERJID"]].name
                 if "@" in content["ZMEMBERJID"]:
-                    fallback = content["ZMEMBERJID"].split('@')[0]
+                    fallback = content["ZMEMBERJID"].split("@")[0]
                 else:
                     fallback = None
             else:
                 fallback = None
+            message.sender_jid = content["ZMEMBERJID"]
             message.sender = name or fallback
         else:
+            message.sender_jid = None
             message.sender = None
         if content["ZMESSAGETYPE"] == 6:
             # Metadata
@@ -189,8 +192,8 @@ def messages(db, data, media_folder, timezone_offset, filter_date, filter_chat):
             if content["ZMETADATA"] is not None and content["ZMETADATA"].startswith(b"\x2a\x14"):
                 quoted = content["ZMETADATA"][2:19]
                 message.reply = quoted.decode()
-                message.quoted_data = None # TODO
-            if content["ZMESSAGETYPE"] == 15: # Sticker
+                message.quoted_data = None  # TODO
+            if content["ZMESSAGETYPE"] == 15:  # Sticker
                 message.sticker = True
 
             if content["ZISFROMME"] == 1:
@@ -222,8 +225,7 @@ def messages(db, data, media_folder, timezone_offset, filter_date, filter_chat):
         if i % 1000 == 0:
             print(f"Processing messages...({i}/{total_row_number})", end="\r")
         content = c.fetchone()
-    print(
-        f"Processing messages...({total_row_number}/{total_row_number})", end="\r")
+    print(f"Processing messages...({total_row_number}/{total_row_number})", end="\r")
 
 
 def media(db, data, media_folder, filter_date, filter_chat, separate_media=False):
@@ -238,8 +240,8 @@ def media(db, data, media_folder, filter_date, filter_chat, separate_media=False
                     LEFT JOIN ZWAGROUPMEMBER
                         ON ZWAMESSAGE.ZGROUPMEMBER = ZWAGROUPMEMBER.Z_PK
                   WHERE 1=1
-                    {f'AND ZMESSAGEDATE {filter_date}' if filter_date is not None else ''}
-                    {get_chat_condition(filter_chat[0], True, ["ZWACHATSESSION.ZCONTACTJID","ZMEMBERJID"], "ZGROUPINFO", "ios")}
+                    {f"AND ZMESSAGEDATE {filter_date}" if filter_date is not None else ""}
+                    {get_chat_condition(filter_chat[0], True, ["ZWACHATSESSION.ZCONTACTJID", "ZMEMBERJID"], "ZGROUPINFO", "ios")}
                     {get_chat_condition(filter_chat[1], False, ["ZWACHATSESSION.ZCONTACTJID", "ZMEMBERJID"], "ZGROUPINFO", "ios")}
                 """)
     total_row_number = c.fetchone()[0]
@@ -260,7 +262,7 @@ def media(db, data, media_folder, filter_date, filter_chat, separate_media=False
                     LEFT JOIN ZWAGROUPMEMBER
                         ON ZWAMESSAGE.ZGROUPMEMBER = ZWAGROUPMEMBER.Z_PK
                  WHERE ZMEDIALOCALPATH IS NOT NULL
-                    {f'AND ZWAMESSAGE.ZMESSAGEDATE {filter_date}' if filter_date is not None else ''}
+                    {f"AND ZWAMESSAGE.ZMESSAGEDATE {filter_date}" if filter_date is not None else ""}
                     {get_chat_condition(filter_chat[0], True, ["ZCONTACTJID", "ZMEMBERJID"], "ZGROUPINFO", "ios")}
                     {get_chat_condition(filter_chat[1], False, ["ZCONTACTJID", "ZMEMBERJID"], "ZGROUPINFO", "ios")}
                  ORDER BY ZCONTACTJID ASC""")
