@@ -112,6 +112,7 @@ def messages(db, data, media_folder, timezone_offset, filter_date, filter_chat):
                         ZWAGROUPMEMBER.ZMEMBERJID,
 						ZMETADATA,
                         ZSTANZAID,
+                        ZSORT,
                         ZGROUPINFO
                  FROM ZWAMESSAGE
                     LEFT JOIN ZWAGROUPMEMBER
@@ -149,6 +150,7 @@ def messages(db, data, media_folder, timezone_offset, filter_date, filter_chat):
             timestamp=ts,
             time=ts,  # TODO: Could be bug
             key_id=content["ZSTANZAID"][:17],
+            order=content["ZSORT"],
             timezone_offset=timezone_offset,
         )
         invalid = False

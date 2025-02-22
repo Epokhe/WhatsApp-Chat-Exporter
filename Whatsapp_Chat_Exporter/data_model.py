@@ -67,7 +67,7 @@ class ChatStore():
 
 
 class Message():
-    def __init__(self, from_me: Union[bool,int], timestamp: int, time: Union[int,float,str], key_id: int, timezone_offset: int = 0):
+    def __init__(self, from_me: Union[bool,int], timestamp: int, time: Union[int,float,str], key_id: int, order: int, timezone_offset: int = 0):
         self.from_me = bool(from_me)
         self.timestamp = timestamp / 1000 if timestamp > 9999999999 else timestamp
         if isinstance(time, int) or isinstance(time, float):
@@ -78,6 +78,7 @@ class Message():
             raise TypeError("Time must be a string or number")
         self.media = False
         self.key_id = key_id
+        self.order = order
         self.meta = False
         self.data = None
         self.sender = None
@@ -98,6 +99,7 @@ class Message():
             'time'        : self.time,
             'media'       : self.media,
             'key_id'      : self.key_id,
+            'order'       : self.order,
             'meta'        : self.meta,
             'data'        : self.data,
             'sender'      : self.sender,
